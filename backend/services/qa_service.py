@@ -20,11 +20,18 @@ def is_greeting(query: str) -> bool:
 
 def is_page_count_question(query: str) -> bool:
     normalized = query.lower()
-    return bool(re.search(r"(how many|number of|total) pages?|page count", normalized))
+    page_terms = ("page", "pages")
+    count_terms = ("how many", "number", "no.", "total", "count")
+    return any(term in normalized for term in page_terms) and any(
+        term in normalized for term in count_terms
+    )
 
 
 def is_summary_request(query: str) -> bool:
-    return bool(re.search(r"\b(summarize|summary|overview|gist)\b", query.lower()))
+    return bool(re.search(
+        r"\b(summarize|summary|summery|overview|gist)\b",
+        query.lower(),
+    ))
 
 
 def requested_sentence_count(query: str) -> tuple[int, bool]:

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Chat</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="app-card" aria-label="PDF chatbot">
+      <header class="hero">
+        <p class="eyebrow">DOCUMENT ASSISTANT</p>
+        <h1>Chat with your PDF</h1>
+        <p class="subtitle">Upload a PDF and ask questions based on its contents.</p>
+      </header>
+
+      <section id="upload-section" class="upload-section">
+        <label id="drop-zone" class="drop-zone" for="pdf-file">
+          <span class="upload-icon">↑</span>
+          <span class="upload-title">Choose a PDF</span>
+          <span class="upload-description">PDF files only</span>
+          <input id="pdf-file" type="file" accept="application/pdf,.pdf">
+        </label>
+        <p id="upload-status" class="status" aria-live="polite"></p>
+      </section>
+
+      <section id="chat-section" class="chat-section" hidden>
+        <div class="document-bar">
+          <div>
+            <p class="document-label">CURRENT DOCUMENT</p>
+            <p id="document-name" class="document-name"></p>
+          </div>
+          <button id="change-document" class="secondary-button" type="button">Change PDF</button>
+        </div>
+
+        <div id="messages" class="messages" aria-live="polite"></div>
+
+        <form id="chat-form" class="chat-form">
+          <label class="sr-only" for="question">Ask a question</label>
+          <input id="question" type="text" placeholder="Ask something about your PDF…" autocomplete="off" required>
+          <button id="send-button" type="submit">Send</button>
+        </form>
+      </section>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

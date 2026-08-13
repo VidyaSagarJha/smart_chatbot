@@ -39,14 +39,17 @@ class Settings:
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./chat.db")
 
     # -----------------------
-    # REDIS (for memory later)
+    # REDIS (for query caching)
     # -----------------------
     REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+    REDIS_ENABLED = os.getenv("REDIS_ENABLED", "true").lower() == "true"
+    CACHE_TTL_QUERIES = int(os.getenv("CACHE_TTL_QUERIES", 3600))  # 1 hour
 
     # -----------------------
     # EXTERNAL TOOLS
     # -----------------------
     SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")
+
 
     # -----------------------
     # SECURITY

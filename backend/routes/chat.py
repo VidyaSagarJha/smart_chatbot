@@ -2,6 +2,10 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from services.qa_service import get_answer
 from services.memory_service import save_message, get_history
+from services.cache_service import cache_query_response, set_query_cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -13,24 +17,28 @@ class ChatRequest(BaseModel):
 
 @router.post("/chat")
 def chat(req: ChatRequest):
-    # 1. get history from DB
+    # 1. Check cache first
+    cached_answer = cache_query_response(req.query, req.doc_id)
+    if cached_answer:
+        logger.info(f"Cache hit! Using cached response for: {req.query[:50]}...")
+        return {"answer": cached_answer, "from_cache": True}
+    
+    # 2. get history from DB
     history = get_history(req.session_id)
 
-    # 2. build context
+    # 3. build context
     history_text = ""
     for msg in history[-5:]:
         history_text += f"{msg['role']}: {msg['content']}\n"
 
-    enhanced_query = f"""
-            Conversation so far: {history_text}
-            Current question: {req.query}
-                """
-
-    # 3. get answer
+    # 4. get answer
     answer = get_answer(req.query, req.doc_id, history_text)
 
-    # 4. save to DB
+    # 5. cache the response
+    set_query_cache(req.query, req.doc_id, answer)
+
+    # 6. save to DB
     save_message(req.session_id, "user", req.query)
     save_message(req.session_id, "assistant", answer)
 
-    return {"answer": answer}           
+    return {"answer": answer, "from_cache": False}

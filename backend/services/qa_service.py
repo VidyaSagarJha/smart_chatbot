@@ -49,6 +49,10 @@ def get_llm():
 
 
 def summarize_document(query: str, doc_id: str, metadata: dict):
+    # Validate metadata
+    if not metadata or "chunk_count" not in metadata:
+        return "Document metadata not found."
+    
     chunks = retrieve_document_chunks(doc_id, metadata["chunk_count"])
     if not chunks:
         return "I couldn't retrieve this document's text for summarization."
@@ -57,9 +61,15 @@ def summarize_document(query: str, doc_id: str, metadata: dict):
     llm = get_llm()
     partial_summaries = []
 
-    for start in range(0, len(chunks), SUMMARY_BATCH_SIZE):
-        section = "\n\n".join(chunks[start:start + SUMMARY_BATCH_SIZE])
-        response = llm.invoke(f"""
+    try:
+        for start in range(0, len(chunks), SUMMARY_BATCH_SIZE):
+            section = "\n\n".join(chunks[start:start + SUMMARY_BATCH_SIZE])
+            
+            # Skip empty sections
+            if not section.strip():
+                continue
+            
+            response = llm.invoke(f"""
 Summarize this section of a document faithfully. Preserve key facts, names,
 dates, responsibilities, numbers, and conclusions. Do not add information
 that is not present in the text.
@@ -67,10 +77,14 @@ that is not present in the text.
 Section:
 {section}
 """)
-        partial_summaries.append(response.content)
+            partial_summaries.append(response.content)
 
-    combined_summaries = "\n\n".join(partial_summaries)
-    response = llm.invoke(f"""
+        # Check if we got any summaries
+        if not partial_summaries:
+            return "Could not summarize document - all sections were empty."
+
+        combined_summaries = "\n\n".join(partial_summaries)
+        response = llm.invoke(f"""
 Create a clear, faithful summary of the full document using only the section
 summaries below. Use at most {sentence_count} sentences. Do not invent facts.
 
@@ -78,10 +92,13 @@ Section summaries:
 {combined_summaries}
 """)
 
-    cap_notice = ""
-    if was_capped:
-        cap_notice = f"You requested more than {MAX_SUMMARY_SENTENCES} sentences, so the summary is capped at {MAX_SUMMARY_SENTENCES}.\n\n"
-    return cap_notice + response.content
+        cap_notice = ""
+        if was_capped:
+            cap_notice = f"You requested more than {MAX_SUMMARY_SENTENCES} sentences, so the summary is capped at {MAX_SUMMARY_SENTENCES}.\n\n"
+        return cap_notice + response.content
+    
+    except Exception as e:
+        return f"Error generating summary: {str(e)}"
 
 
 def get_answer(query: str, doc_id: str, history_text: str = ""):

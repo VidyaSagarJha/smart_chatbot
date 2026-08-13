@@ -36,11 +36,18 @@ def retrieve_document_chunks(doc_id: str, chunk_count: int, batch_size: int = 10
     for start in range(0, len(chunk_ids), batch_size):
         batch_ids = chunk_ids[start:start + batch_size]
         response = index.fetch(ids=batch_ids)
-        vectors = response.get("vectors", {})
+        
+        # Handle Pinecone FetchResponse object
+        # Response has a 'vectors' attribute which is a dict
+        vectors = response.vectors if hasattr(response, 'vectors') else {}
 
         for vector_id in batch_ids:
-            vector = vectors.get(vector_id)
-            if vector:
-                chunks.append(vector["metadata"]["text"])
+            if vector_id in vectors:
+                vector = vectors[vector_id]
+                if vector and hasattr(vector, 'metadata'):
+                    # Vector object has metadata attribute
+                    metadata = vector.metadata if isinstance(vector.metadata, dict) else dict(vector.metadata)
+                    if "text" in metadata:
+                        chunks.append(metadata["text"])
 
     return chunks

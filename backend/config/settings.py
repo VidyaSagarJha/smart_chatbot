@@ -46,6 +46,15 @@ class Settings:
     CACHE_TTL_QUERIES = int(os.getenv("CACHE_TTL_QUERIES", 3600))  # 1 hour
 
     # -----------------------
+    # RESEND MCP (email PDF summaries)
+    # -----------------------
+    RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+    RESEND_MCP_URL = os.getenv("RESEND_MCP_URL", "http://127.0.0.1:3000/mcp")
+    SUMMARY_RECIPIENT_EMAIL = os.getenv("SUMMARY_RECIPIENT_EMAIL")
+    SUMMARY_SENDER_EMAIL = os.getenv("SUMMARY_SENDER_EMAIL")
+    SUMMARY_REPLY_TO_EMAIL = os.getenv("SUMMARY_REPLY_TO_EMAIL")
+
+    # -----------------------
     # EXTERNAL TOOLS
     # -----------------------
     SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")

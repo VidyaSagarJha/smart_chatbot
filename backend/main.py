@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from routes import upload, chat, session
+from routes import upload, chat, session, email
 
 from db.database import init_db
 init_db()   # run once at startup
@@ -33,6 +33,7 @@ app.add_middleware(
 app.include_router(upload.router)
 app.include_router(chat.router)
 app.include_router(session.router)
+app.include_router(email.router)
 
 frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
 app.mount("/static", StaticFiles(directory=frontend_dir), name="static")

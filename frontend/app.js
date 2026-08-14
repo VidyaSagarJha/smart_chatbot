@@ -9,6 +9,7 @@ const elements = {
   chatForm: document.querySelector("#chat-form"),
   chatSection: document.querySelector("#chat-section"),
   changeDocument: document.querySelector("#change-document"),
+  emailSummary: document.querySelector("#email-summary"),
   documentName: document.querySelector("#document-name"),
   dropZone: document.querySelector("#drop-zone"),
   fileInput: document.querySelector("#pdf-file"),
@@ -43,6 +44,40 @@ function addMessage(role, text, extraClass = "") {
 function setChatEnabled(enabled) {
   elements.question.disabled = !enabled;
   elements.sendButton.disabled = !enabled;
+}
+
+async function emailSummary() {
+  if (state.isWaiting || !state.docId) return;
+
+  state.isWaiting = true;
+  setChatEnabled(false);
+  elements.emailSummary.disabled = true;
+  const originalLabel = elements.emailSummary.textContent;
+  elements.emailSummary.textContent = "Sending…";
+
+  try {
+    const response = await fetch("/email-summary", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        doc_id: state.docId,
+        document_name: elements.documentName.textContent,
+      }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(result.detail || "The summary email could not be sent.");
+    }
+    addMessage("assistant", "The PDF summary was sent to the configured email address.");
+  } catch (error) {
+    addMessage("assistant", error.message || "The summary email could not be sent.");
+  } finally {
+    state.isWaiting = false;
+    setChatEnabled(true);
+    elements.emailSummary.disabled = false;
+    elements.emailSummary.textContent = originalLabel;
+    elements.question.focus();
+  }
 }
 
 async function uploadPdf(file) {
@@ -123,6 +158,7 @@ function resetDocument() {
 elements.fileInput.addEventListener("change", (event) => uploadPdf(event.target.files[0]));
 elements.chatForm.addEventListener("submit", sendQuestion);
 elements.changeDocument.addEventListener("click", resetDocument);
+elements.emailSummary.addEventListener("click", emailSummary);
 
 ["dragenter", "dragover"].forEach((eventName) => {
   elements.dropZone.addEventListener(eventName, (event) => {

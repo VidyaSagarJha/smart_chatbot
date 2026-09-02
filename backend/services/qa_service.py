@@ -34,6 +34,16 @@ def is_summary_request(query: str) -> bool:
     ))
 
 
+def is_contextual_followup(query: str) -> bool:
+    """Detect short questions whose subject comes from conversation history."""
+    normalized = re.sub(r"[^a-z0-9\s]", "", query.lower()).strip()
+    return normalized in {
+        "tell me more", "more", "explain more", "elaborate", "continue",
+        "what else", "and", "why", "how so", "about him", "about her",
+        "about them", "what about him", "what about her", "what about them",
+    }
+
+
 def requested_sentence_count(query: str) -> tuple[int, bool]:
     match = re.search(r"\b(\d+)\s+sentences?\b", query.lower())
     requested = int(match.group(1)) if match else 10
@@ -139,26 +149,34 @@ def get_answer(query: str, doc_id: str, history_text: str = ""):
 
 
     if is_greeting(query):
-        return "Hello! What would you like to know about your PDF?"
+        return "Hello! What would you like to know about your PDFs?"
 
     metadata = get_document_metadata(doc_id)
     if is_page_count_question(query) and metadata:
         page_count = metadata["page_count"]
-        return f"This PDF has {page_count} page{'s' if page_count != 1 else ''}."
+        return f"This PDF collection has {page_count} page{'s' if page_count != 1 else ''} in total."
 
     if is_summary_request(query) and metadata:
         return summarize_document(query, doc_id, metadata)
 
-    # 1. Retrieve using ONLY the clean query
-    chunks = retrieve_chunks(query, doc_id)
+    # Resolve vague follow-ups using recent conversation context. Without this,
+    # an embedding for "tell me more" can retrieve an unrelated PDF/person.
+    retrieval_query = query
+    if history_text and is_contextual_followup(query):
+        retrieval_query = f"{history_text[-2000:]}\nFollow-up question: {query}"
+
+    chunks = retrieve_chunks(retrieval_query, doc_id)
     context = "\n\n".join(chunks)
 
     llm = get_llm()
 
     prompt = f"""
-You are a helpful assistant.
-Answer ONLY from the given context.
-If answer is not in context, say "I don't know".
+You are a helpful assistant answering questions about a collection of PDFs.
+Answer only from the given context. The source PDF labels are trustworthy
+metadata and may be used to identify which document the user means. For broad
+requests such as "tell me about X", give a useful overview of what the retrieved
+passages establish about X. If the context does not contain enough relevant
+information, say "I don't know". Answer in the same language as the question.
 
 Context:
 {context}

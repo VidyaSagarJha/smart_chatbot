@@ -11,16 +11,16 @@
     <section class="app-card" aria-label="PDF chatbot">
       <header class="hero">
         <p class="eyebrow">DOCUMENT ASSISTANT</p>
-        <h1>Chat with your PDF</h1>
-        <p class="subtitle">Upload a PDF and ask questions based on its contents.</p>
+        <h1>Chat with your PDFs</h1>
+        <p class="subtitle">Upload one or more PDFs and ask questions across their contents.</p>
       </header>
 
       <section id="upload-section" class="upload-section">
         <label id="drop-zone" class="drop-zone" for="pdf-file">
           <span class="upload-icon">↑</span>
-          <span class="upload-title">Choose a PDF</span>
-          <span class="upload-description">PDF files only</span>
-          <input id="pdf-file" type="file" accept="application/pdf,.pdf">
+          <span class="upload-title">Choose PDFs</span>
+          <span class="upload-description">Select or drop one or more PDF files</span>
+          <input id="pdf-file" type="file" accept="application/pdf,.pdf" multiple>
         </label>
         <p id="upload-status" class="status" aria-live="polite"></p>
       </section>
@@ -28,12 +28,12 @@
       <section id="chat-section" class="chat-section" hidden>
         <div class="document-bar">
           <div>
-            <p class="document-label">CURRENT DOCUMENT</p>
+            <p class="document-label">CURRENT PDF COLLECTION</p>
             <p id="document-name" class="document-name"></p>
           </div>
           <div class="document-actions">
             <button id="email-summary" class="secondary-button" type="button">Email summary</button>
-            <button id="change-document" class="secondary-button" type="button">Change PDF</button>
+            <button id="change-document" class="secondary-button" type="button">Change PDFs</button>
           </div>
         </div>
 
@@ -41,12 +41,12 @@
 
         <form id="chat-form" class="chat-form">
           <label class="sr-only" for="question">Ask a question</label>
-          <input id="question" type="text" placeholder="Ask something about your PDF…" autocomplete="off" required>
+          <input id="question" type="text" placeholder="Ask something about your PDFs…" autocomplete="off" required>
           <button id="send-button" type="submit">Send</button>
         </form>
       </section>
     </section>
   </main>
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=2"></script>
 </body>
 </html>

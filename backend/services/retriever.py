@@ -2,7 +2,7 @@ from services.pinecone_service import get_index
 from services.embeddings import get_embeddings
 
 
-def retrieve_chunks(query: str, doc_id: str, top_k: int = 3):
+def retrieve_chunks(query: str, doc_id: str, top_k: int = 8):
     index = get_index()
     embeddings = get_embeddings()
 
@@ -19,10 +19,17 @@ def retrieve_chunks(query: str, doc_id: str, top_k: int = 3):
     print(f"📦 Pinecone results: {results}")              # ✅ add this
     print(f"📄 Matches found: {len(results['matches'])}") # ✅ add this
 
-    chunks = [
-        match["metadata"]["text"]
-        for match in results["matches"]
-    ]
+    chunks = []
+    for match in results["matches"]:
+        metadata = match.get("metadata", {})
+        text = metadata.get("text", "")
+        if not text:
+            continue
+
+        file_name = metadata.get("file_name") or "Unknown PDF"
+        page = metadata.get("page")
+        location = f", page {int(page) + 1}" if isinstance(page, (int, float)) else ""
+        chunks.append(f"[Source PDF: {file_name}{location}]\n{text}")
 
     return chunks
 

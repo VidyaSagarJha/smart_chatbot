@@ -7,11 +7,23 @@ from config.settings import settings
 import uuid
 
 
-def process_pdf(file_url: str):
-    # 1. Load PDF
-    docs = load_pdf_from_url(file_url)
-    print(f"Loaded {len(docs)} pages")
-    page_count = len(docs)
+def process_pdfs(files: list[dict[str, str]]):
+    """Index several PDFs as one searchable document collection."""
+    docs = []
+    page_count = 0
+
+    for file_number, item in enumerate(files):
+        file_docs = load_pdf_from_url(item["url"])
+        page_count += len(file_docs)
+        for document in file_docs:
+            document.metadata.update({
+                "source": item["url"],
+                "file_name": item["name"],
+                "file_number": file_number,
+            })
+        docs.extend(file_docs)
+
+    print(f"Loaded {page_count} pages from {len(files)} PDFs")
 
     # 2. Chunk
     chunks = split_documents(docs)
@@ -33,14 +45,16 @@ def process_pdf(file_url: str):
 
     vectors = []
 
-    for i, (text, vector) in enumerate(zip(texts, vectors_values)):
+    for i, (chunk, vector) in enumerate(zip(chunks, vectors_values)):
         vectors.append({
             "id": f"{doc_id}-{i}",
             "values": vector,
             "metadata": {
-                "text": text,
-                "source": file_url,
-                "doc_id": doc_id
+                "text": chunk.page_content,
+                "source": chunk.metadata.get("source", ""),
+                "file_name": chunk.metadata.get("file_name", ""),
+                "page": chunk.metadata.get("page", 0),
+                "doc_id": doc_id,
             }
         })
 
@@ -59,6 +73,13 @@ def process_pdf(file_url: str):
     )
 
     return {
-        "chunks": len(chunks),  # ✅ correct
-        "doc_id": doc_id        # ✅ correct
+        "chunks": len(chunks),
+        "pages": page_count,
+        "files": len(files),
+        "doc_id": doc_id,
     }
+
+
+def process_pdf(file_url: str):
+    """Backward-compatible wrapper for callers that index one PDF."""
+    return process_pdfs([{"url": file_url, "name": "document.pdf"}])

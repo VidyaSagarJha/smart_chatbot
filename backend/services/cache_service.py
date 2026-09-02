@@ -21,6 +21,7 @@ except ImportError:
 
 # In-memory fallback cache
 _memory_cache = {}
+CACHE_VERSION = "v3"
 
 
 class QueryCache:
@@ -45,14 +46,16 @@ class QueryCache:
                 logger.warning(f"⚠️ Redis connection failed: {e}. Using in-memory cache.")
                 self.use_redis = False
     
-    def _make_key(self, query: str, doc_id: str) -> str:
-        """Generate cache key from query and doc_id."""
-        data = f"{query}:{doc_id}"
+    def _make_key(self, query: str, doc_id: str, context: str = "") -> str:
+        """Generate a key that distinguishes identical queries by conversation."""
+        # Bump CACHE_VERSION whenever answer-generation behavior changes so a
+        # stale response is not served after retrieval or prompt improvements.
+        data = f"{CACHE_VERSION}:{query}:{doc_id}:{context}"
         return "query:" + hashlib.md5(data.encode()).hexdigest()
     
-    def get(self, query: str, doc_id: str) -> Optional[str]:
+    def get(self, query: str, doc_id: str, context: str = "") -> Optional[str]:
         """Get cached response."""
-        key = self._make_key(query, doc_id)
+        key = self._make_key(query, doc_id, context)
         try:
             if self.use_redis:
                 cached = self.redis_client.get(key)
@@ -68,9 +71,9 @@ class QueryCache:
         
         return None
     
-    def set(self, query: str, doc_id: str, response: str) -> None:
+    def set(self, query: str, doc_id: str, response: str, context: str = "") -> None:
         """Cache response."""
-        key = self._make_key(query, doc_id)
+        key = self._make_key(query, doc_id, context)
         try:
             if self.use_redis:
                 self.redis_client.setex(key, settings.CACHE_TTL_QUERIES, response)
@@ -104,11 +107,11 @@ def get_query_cache() -> QueryCache:
     return _cache
 
 
-def cache_query_response(query: str, doc_id: str) -> Optional[str]:
+def cache_query_response(query: str, doc_id: str, context: str = "") -> Optional[str]:
     """Try to get cached response."""
-    return get_query_cache().get(query, doc_id)
+    return get_query_cache().get(query, doc_id, context)
 
 
-def set_query_cache(query: str, doc_id: str, response: str) -> None:
+def set_query_cache(query: str, doc_id: str, response: str, context: str = "") -> None:
     """Cache query response."""
-    get_query_cache().set(query, doc_id, response)
+    get_query_cache().set(query, doc_id, response, context)

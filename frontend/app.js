@@ -80,17 +80,21 @@ async function emailSummary() {
   }
 }
 
-async function uploadPdf(file) {
-  if (!file || state.isUploading) return;
-  if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-    setUploadStatus("Please select a PDF file.", "error");
+async function uploadPdfs(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length || state.isUploading) return;
+  const invalidFile = files.find(
+    (file) => file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf"),
+  );
+  if (invalidFile) {
+    setUploadStatus(`Only PDF files are supported (${invalidFile.name}).`, "error");
     return;
   }
 
   state.isUploading = true;
-  setUploadStatus("Uploading and preparing your document…");
+  setUploadStatus(`Uploading and preparing ${files.length} PDF${files.length === 1 ? "" : "s"}…`);
   const data = new FormData();
-  data.append("file", file);
+  files.forEach((file) => data.append("files", file));
 
   try {
     const response = await fetch("/upload", { method: "POST", body: data });
@@ -100,11 +104,14 @@ async function uploadPdf(file) {
     }
 
     state.docId = result.doc_id;
-    elements.documentName.textContent = file.name;
+    elements.documentName.textContent = files.map((file) => file.name).join(", ");
     elements.uploadSection.hidden = true;
     elements.chatSection.hidden = false;
     elements.messages.replaceChildren();
-    addMessage("assistant", "Your PDF is ready. What would you like to know?");
+    addMessage(
+      "assistant",
+      `${files.length} PDF${files.length === 1 ? " is" : "s are"} ready. What would you like to know?`,
+    );
     elements.question.focus();
   } catch (error) {
     setUploadStatus(error.message || "Upload failed. Please try again.", "error");
@@ -155,7 +162,7 @@ function resetDocument() {
   createSession().catch((error) => setUploadStatus(error.message, "error"));
 }
 
-elements.fileInput.addEventListener("change", (event) => uploadPdf(event.target.files[0]));
+elements.fileInput.addEventListener("change", (event) => uploadPdfs(event.target.files));
 elements.chatForm.addEventListener("submit", sendQuestion);
 elements.changeDocument.addEventListener("click", resetDocument);
 elements.emailSummary.addEventListener("click", emailSummary);
@@ -172,6 +179,6 @@ elements.emailSummary.addEventListener("click", emailSummary);
     elements.dropZone.classList.remove("dragging");
   });
 });
-elements.dropZone.addEventListener("drop", (event) => uploadPdf(event.dataTransfer.files[0]));
+elements.dropZone.addEventListener("drop", (event) => uploadPdfs(event.dataTransfer.files));
 
 createSession().catch((error) => setUploadStatus(error.message, "error"));

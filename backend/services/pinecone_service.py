@@ -17,7 +17,7 @@ def init_pinecone():
             metric="cosine",
             spec=ServerlessSpec(
                 cloud="aws",
-                region="us-east-1"   # ⚠️ Pinecone region (NOT your AWS S3 region)
+                region="us-east-1"   
             )
         )
 

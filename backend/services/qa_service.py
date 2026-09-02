@@ -189,10 +189,10 @@ Current question:
 
 Answer:
 """
-    print(f"📨 Prompt being sent: {prompt}")    # ✅ add
+    print(f"📨 Prompt being sent: {prompt}")   
 
     response = llm.invoke(prompt)
 
-    print(f"✅ LLM response: {response.content}") # ✅ add
+    print(f"✅ LLM response: {response.content}") 
 
     return response.content

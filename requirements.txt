@@ -7,11 +7,15 @@ langchain-community
 langchain-text-splitters
 langchain-openai
 langchain-pinecone
+langgraph
+langgraph-checkpoint-sqlite
 openai
 pypdf
 tiktoken
 sqlalchemy
 requests
+httpx
+svix
 
 # Environment Variable Management
 python-dotenv

@@ -39,27 +39,32 @@ def _result_text(result: Any) -> str:
     return "\n".join(parts)
 
 
-async def send_summary_email(summary: str, document_name: str = "your PDF") -> str:
-    """Send a PDF summary by calling Resend's `send-email` MCP tool."""
+async def send_email(
+    subject: str,
+    content: str,
+    recipient: str | None = None,
+    reply_to: str | None = None,
+    html_content: str | None = None,
+) -> str:
+    """Send approved content through Resend's MCP `send-email` tool."""
     configuration_error = _configuration_error()
     if configuration_error:
         raise ResendMCPError(configuration_error)
 
-    safe_document_name = document_name.strip() or "your PDF"
-    subject = f"Summary: {safe_document_name}"
-    text = f"PDF summary for {safe_document_name}\n\n{summary}"
-    body_html = (
-        f"<h2>PDF summary: {html.escape(safe_document_name)}</h2>"
+    safe_subject = subject.strip() or "Document assistant message"
+    text = content.strip()
+    body_html = html_content or (
+        f"<h2>{html.escape(safe_subject)}</h2>"
         f"<pre style=\"font-family:Arial,sans-serif;white-space:pre-wrap\">"
-        f"{html.escape(summary)}</pre>"
+        f"{html.escape(text)}</pre>"
     )
     arguments = {
         "from": settings.SUMMARY_SENDER_EMAIL,
         "replyTo": [
-            settings.SUMMARY_REPLY_TO_EMAIL or settings.SUMMARY_SENDER_EMAIL
+            reply_to or settings.SUMMARY_REPLY_TO_EMAIL or settings.SUMMARY_SENDER_EMAIL
         ],
-        "to": [settings.SUMMARY_RECIPIENT_EMAIL],
-        "subject": subject,
+        "to": [recipient or settings.SUMMARY_RECIPIENT_EMAIL],
+        "subject": safe_subject,
         "text": text,
         "html": body_html,
     }
@@ -84,6 +89,15 @@ async def send_summary_email(summary: str, document_name: str = "your PDF") -> s
 
     if getattr(result, "isError", False) or getattr(result, "is_error", False):
         logger.error("Resend MCP returned an error: %s", _result_text(result))
-        raise ResendMCPError("Resend could not send the summary email. Check its server logs.")
+        raise ResendMCPError("Resend could not send the email. Check its server logs.")
 
-    return _result_text(result) or "Summary email sent successfully."
+    return _result_text(result) or "Email sent successfully."
+
+
+async def send_summary_email(summary: str, document_name: str = "your PDF") -> str:
+    """Backward-compatible summary-email wrapper used by the REST endpoint."""
+    safe_document_name = document_name.strip() or "your PDF"
+    return await send_email(
+        subject=f"Summary: {safe_document_name}",
+        content=f"PDF summary for {safe_document_name}\n\n{summary}",
+    )

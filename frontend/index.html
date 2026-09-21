@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF Chat</title>
-  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/styles.css?v=3">
 </head>
 <body>
   <main class="app-shell">
@@ -32,7 +32,6 @@
             <p id="document-name" class="document-name"></p>
           </div>
           <div class="document-actions">
-            <button id="email-summary" class="secondary-button" type="button">Email summary</button>
             <button id="change-document" class="secondary-button" type="button">Change PDFs</button>
           </div>
         </div>
@@ -42,11 +41,18 @@
         <form id="chat-form" class="chat-form">
           <label class="sr-only" for="question">Ask a question</label>
           <input id="question" type="text" placeholder="Ask something about your PDFs…" autocomplete="off" required>
+          <button id="voice-button" class="voice-button" type="button" aria-label="Start voice command" title="Speak your question">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/>
+              <path d="M19 11v1a7 7 0 0 1-14 0v-1M12 19v3M8 22h8"/>
+            </svg>
+          </button>
           <button id="send-button" type="submit">Send</button>
         </form>
+        <p id="voice-status" class="voice-status" aria-live="polite"></p>
       </section>
     </section>
   </main>
-  <script src="/static/app.js?v=2"></script>
+  <script src="/static/app.js?v=3"></script>
 </body>
 </html>

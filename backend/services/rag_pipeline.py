@@ -7,6 +7,8 @@ from config.settings import settings
 import uuid
 
 
+
+# 1
 def process_pdfs(files: list[dict[str, str]]):
     """Index several PDFs as one searchable document collection."""
     docs = []
@@ -31,6 +33,7 @@ def process_pdfs(files: list[dict[str, str]]):
 
     # 3. Embeddings
     embeddings = get_embeddings()
+    print(embeddings)
 
     # 4. Init Pinecone
     pc = init_pinecone()
